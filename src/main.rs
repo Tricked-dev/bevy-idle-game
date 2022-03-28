@@ -1,12 +1,5 @@
-use bevy::{log::info, prelude::*};
-use bevy_egui::{
-    egui::{
-        self,
-        epaint::{RectShape, Tessellator},
-        pos2, Align2, Color32, FontId, Frame, RichText, Rounding,
-    },
-    EguiContext, EguiPlugin,
-};
+use bevy::prelude::*;
+use bevy_egui::{egui, EguiContext, EguiPlugin};
 use upgrades::{Multiplier, Upgrades};
 mod upgrades;
 
@@ -31,7 +24,7 @@ fn main() {
         .add_plugin(EguiPlugin)
         .insert_resource(Data {
             money: 0,
-            base: 5.0,
+            base: 250.0,
             multiplier: 1.0,
             additive: 0.0,
             interval: 1.0,
@@ -59,23 +52,23 @@ fn upgrades_menu(
         upgrades_data.upgrades.iter_mut().for_each(|upgrade| {
             ui.group(|ui| {
                 let d = upgrade.display();
-                ui.label(format!("{} l:{}", d.title, upgrade.level()));
+                ui.label(format!("{} L:{}", d.title, upgrade.level()));
                 ui.label(d.desc);
                 if upgrade.max() {
                     ui.add_enabled_ui(false, |ui| {
                         if ui
-                            .button(RichText::new("MAX").color(Color32::RED))
+                            .button(egui::RichText::new("MAX").color(egui::Color32::RED))
                             .clicked()
                         {}
                     });
                 } else {
                     ui.add_enabled_ui(data.money > upgrade.price() as i128, |ui| {
                         if ui
-                            .button(RichText::new(format!("${}", upgrade.price())).color(
+                            .button(egui::RichText::new(format!("${}", upgrade.price())).color(
                                 if data.money > upgrade.price() as i128 {
-                                    Color32::WHITE
+                                    egui::Color32::WHITE
                                 } else {
-                                    Color32::RED
+                                    egui::Color32::RED
                                 },
                             ))
                             .clicked()
@@ -125,19 +118,17 @@ fn ui_example(mut egui_context: ResMut<EguiContext>, data: Res<Data>) {
 }
 
 fn setup_system(mut commands: Commands, data: Res<Data>) {
-    // Add an entity to the world with a timer
     commands
         .spawn()
         .insert(Timer::from_seconds(data.interval, false));
 }
 
-/// This system ticks all the `Timer` components on entities within the scene
-/// using bevy's `Time` resource to get the delta between each update.
 fn timer_system(
     mut commands: Commands,
     time: Res<Time>,
     mut query: Query<&mut Timer>,
     mut data: ResMut<Data>,
+    mut upgrades_data: ResMut<UpgradesData>,
 ) {
     for mut timer in query.iter_mut() {
         if timer.tick(time.delta()).just_finished() {
@@ -145,6 +136,14 @@ fn timer_system(
             commands
                 .spawn()
                 .insert(Timer::from_seconds(data.interval, false));
+            if data.calc() > 300.0
+                && !upgrades_data
+                    .upgrades
+                    .iter()
+                    .any(|x| Upgrades::SuperBaseUpgrade(x.level()) == *x)
+            {
+                upgrades_data.upgrades.push(Upgrades::SuperBaseUpgrade(0))
+            }
         }
     }
 }
