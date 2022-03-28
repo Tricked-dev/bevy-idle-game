@@ -24,7 +24,7 @@ fn main() {
         .add_plugin(EguiPlugin)
         .insert_resource(Data {
             money: 0,
-            base: 250.0,
+            base: 5.0,
             multiplier: 1.0,
             additive: 0.0,
             interval: 1.0,
@@ -111,9 +111,13 @@ fn ui_example(mut egui_context: ResMut<EguiContext>, data: Res<Data>) {
     egui::Window::new("Stats").show(egui_context.ctx_mut(), |ui| {
         ui.label(format!("Money {}", data.money));
         ui.label(format!(
-            "Money/s {}",
-            (data.calc() / data.interval as f64).floor()
+            "Money/s {:.2}",
+            (data.calc() / data.interval as f64)
         ));
+        ui.label(format!("Base Earnings {}", data.base));
+        ui.label(format!("Multiplier {:.2}", data.multiplier));
+        ui.label(format!("Additive {}", data.additive));
+        ui.label(format!("Money Interval {}", data.interval));
     });
 }
 
@@ -143,6 +147,22 @@ fn timer_system(
                     .any(|x| Upgrades::SuperBaseUpgrade(x.level()) == *x)
             {
                 upgrades_data.upgrades.push(Upgrades::SuperBaseUpgrade(0))
+            }
+            if data.calc() > 1400.0
+                && !upgrades_data
+                    .upgrades
+                    .iter()
+                    .any(|x| Upgrades::BetterMultiplier(x.level()) == *x)
+            {
+                upgrades_data.upgrades.push(Upgrades::BetterMultiplier(0))
+            }
+            if data.calc() > 30000.0
+                && !upgrades_data
+                    .upgrades
+                    .iter()
+                    .any(|x| Upgrades::InsaneBaseUpgrade(x.level()) == *x)
+            {
+                upgrades_data.upgrades.push(Upgrades::InsaneBaseUpgrade(0))
             }
         }
     }
