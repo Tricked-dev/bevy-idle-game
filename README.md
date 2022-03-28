@@ -1,3 +1,3 @@
-## Credits
+## Bevy idle game
 
-- https://cheekyinkling.itch.io/shikashis-fantasy-icons-pack
+Simple idle game made in rust with bevy and egui
